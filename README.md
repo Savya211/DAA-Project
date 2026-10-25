@@ -12,7 +12,11 @@ A 2D top-down traffic intersection simulation built with **Python 3** and **Pyga
 - **Two Signal-Control Paradigms:**
   - **Fixed-Time Control:** Deterministic cyclic phase scheduling (Round-Robin).
   - **Greedy Optimization:** Real-time heuristic priority selection based on queue length and accumulated delay:
-    $$\text{Priority}(d) = w_v \cdot C(d) + w_w \cdot W(d)$$
+
+    $$
+    \text{Priority}(d) = w_v \cdot C(d) + w_w \cdot W(d)
+    $$
+
 - **Integrated Countdown Timers:**
   - Real-time digital LED timer attached beside each physical traffic signal.
   - GUI control panel with live decimal countdowns to next phase changes and starvation metrics.
@@ -86,27 +90,37 @@ traffic_signal_simulation/
 ### 6.1 Algorithmic Paradigms Implemented
 
 #### Paradigm A: Static Cyclic Permutation (Fixed-Time Round-Robin)
-* **Concept:** Rotates green permission through an invariant sequence:
-  $$\pi = \langle \text{North}, \text{South}, \text{East}, \text{West} \rangle$$
-* **Transitions:** Each phase allocates a constant duration $T_{\text{green}}$, followed by yellow clearance $T_{\text{yellow}} = 3.0\text{ s}$, and all-red safety clearance $T_{\text{all-red}} = 1.0\text{ s}$.
-* **Characteristics:** Predictable, deterministic, zero decision overhead, but suffers from high idle delay under asymmetric traffic distributions.
+- **Concept:** Rotates green permission through an invariant sequence:
+
+  $$
+  \pi = \langle \text{North}, \text{South}, \text{East}, \text{West} \rangle
+  $$
+
+- **Transitions:** Each phase allocates a constant duration $T_{\text{green}}$, followed by yellow clearance $T_{\text{yellow}} = 3.0\text{ s}$, and all-red safety clearance $T_{\text{all-red}} = 1.0\text{ s}$.
+- **Characteristics:** Predictable, deterministic, zero decision overhead, but suffers from high idle delay under asymmetric traffic distributions.
 
 #### Paradigm B: Greedy Heuristic Optimization
-* **Concept:** At every phase expiration, an optimal next phase is selected locally by evaluating a heuristic evaluation function:
-  $$P(d) = w_v \cdot C(d) + w_w \cdot W(d)$$
+- **Concept:** At every phase expiration, an optimal next phase is selected locally by evaluating a heuristic evaluation function:
+
+  $$
+  P(d) = w_v \cdot C(d) + w_w \cdot W(d)
+  $$
+
   Where:
   - $C(d) \in \mathbb{N}_{\ge 0}$ is the queue length (vehicles waiting behind stop line on approach $d$).
   - $W(d) \in \mathbb{R}_{\ge 0}$ is the mean delay (seconds) experienced by stopped vehicles on approach $d$.
   - $w_v = 1.0$, $w_w = 2.0$ are balancing weights penalizing delay quadratically relative to raw count.
-* **Tie-Breaking Rule:** Lexicographical order on $(\text{Priority Score } \downarrow, \text{Accumulated Inaction Delay } \downarrow, \text{Direction ID } \uparrow)$.
-* **Adaptive Allocation:** Green duration is dynamically scaled proportional to queue size:
-  $$T_g(C) = \begin{cases}
-  T_{\min} & \text{if } C \le 2 \\
-  T_{\max} & \text{if } C \ge 8 \\
-  T_{\min} + \frac{C - 2}{6} (T_{\max} - T_{\min}) & \text{otherwise}
-  \end{cases}$$
-  With $T_{\min} = 5.0\text{ s}$ and $T_{\max} = 25.0\text{ s}$.
-* **Starvation Prevention:** A global accumulator `wait_accum[d]` increments every frame approach $d$ is denied green, guaranteeing that as $t \to \infty$, $W(d) \to \infty$, strictly forcing the greedy score to overtake any competing queue.
+- **Tie-Breaking Rule:** Lexicographical order on $(\text{Priority Score } \downarrow, \text{Accumulated Inaction Delay } \downarrow, \text{Direction ID } \uparrow)$.
+- **Adaptive Allocation:** Green duration is dynamically scaled proportional to queue size:
+  - For light queues ($C \le 2$): $T_g = T_{\min} = 5.0\text{ s}$
+  - For heavy queues ($C \ge 8$): $T_g = T_{\max} = 25.0\text{ s}$
+  - For intermediate queues ($2 < C < 8$):
+
+    $$
+    T_g = T_{\min} + \left(\frac{C - 2}{6}\right) (T_{\max} - T_{\min})
+    $$
+
+- **Starvation Prevention:** A global accumulator `wait_accum[d]` increments every frame approach $d$ is denied green, guaranteeing that as $t \to \infty$, $W(d) \to \infty$, strictly forcing the greedy score to overtake any competing queue.
 
 ---
 
@@ -143,7 +157,7 @@ Let:
 - **Average Case:** $\Theta(N_d \log N_d)$.
 - **Total across all $K$ approaches:**
   - Best Case: $\Omega(N)$
-  - Worst Case: $\mathcal{O}(\sum_{d=1}^K N_d \log N_d) \le \mathcal{O}(N \log(N/K))$
+  - Worst Case: $\mathcal{O}\left(\sum_{d=1}^K N_d \log N_d\right) \le \mathcal{O}\left(N \log\frac{N}{K}\right)$
 
 #### 4. Kinematic Motion & Car-Following Update (`vehicle.update`)
 - Single vehicle headway comparison: $\mathcal{O}(1)$ scalar arithmetic with front car and stop line.
@@ -153,7 +167,8 @@ Let:
 #### 5. Cross-Traffic Intersection Clearance Verification (`main.py`)
 - For each direction $d$, queries whether any perpendicular approach vehicle intersects the central junction bounding box $B \subset \mathbb{R}^2$.
 - Let $N_{\text{perp}}$ be the count of perpendicular vehicles:
-  $$N_{\text{perp}} = \begin{cases} N_{\text{East}} + N_{\text{West}} & \text{if } d \in \{\text{North}, \text{South}\} \\ N_{\text{North}} + N_{\text{South}} & \text{if } d \in \{\text{East}, \text{West}\} \end{cases}$$
+  - For North / South approaches: $N_{\text{perp}} = N_{\text{East}} + N_{\text{West}}$
+  - For East / West approaches: $N_{\text{perp}} = N_{\text{North}} + N_{\text{South}}$
 - Each AABB (Axis-Aligned Bounding Box) intersection test is $\mathcal{O}(1)$.
 - **Best Case:** $\Omega(1)$ (first vehicle tested is inside the box, triggering early exit).
 - **Worst Case:** $\mathcal{O}(N_{\text{perp}})$ (no collision found after testing all perpendicular vehicles).
@@ -167,12 +182,16 @@ Let:
 - **Average Case:** $\Theta(K)$.
 
 #### 7. Per-Frame Main Loop Overall Time Complexity
+
 Combining all operations for one tick ($\Delta t$):
-$$\mathcal{T}_{\text{frame}} = \mathcal{O}(\text{Spawn}) + \mathcal{O}(\text{Sort}) + \mathcal{O}(\text{Clearance Check}) + \mathcal{O}(\text{Vehicle Updates}) + \mathcal{O}(\text{Signal Logic})$$
-$$\mathcal{T}_{\text{frame}} = \mathcal{O}(N) + \mathcal{O}(N \log(N/K)) + \mathcal{O}(N) + \mathcal{O}(N) + \mathcal{O}(K \log K)$$
+
+$$
+\mathcal{T}_{\text{frame}} = \mathcal{O}(N) + \mathcal{O}\left(N \log\frac{N}{K}\right) + \mathcal{O}(K \log K)
+$$
+
 - **Best Case Frame Complexity:** $\Omega(N)$ (queues already sorted, no spawns).
 - **Worst Case Frame Complexity:** $\mathcal{O}(N \log N)$ (dominated by Timsort when $N \gg K$).
-- **Average Case Frame Complexity:** $\Theta(N \log(N/K))$.
+- **Average Case Frame Complexity:** $\Theta\left(N \log\frac{N}{K}\right)$.
 
 ---
 
@@ -229,13 +248,29 @@ Let:
 **Proof Sketch:**
 1. Suppose approach $d_0$ has at least one vehicle waiting ($C(d_0) \ge 1$) at time $t_0$.
 2. For every elapsed second where approach $d_0$ is denied a green phase, the controller updates:
-   $$\text{waitAccum}[d_0] \leftarrow \text{waitAccum}[d_0] + \Delta t$$
+
+   $$
+   \text{waitAccum}[d_0] \leftarrow \text{waitAccum}[d_0] + \Delta t
+   $$
+
 3. Therefore, $W(d_0)$ is a strictly monotonically increasing function of time:
-   $$\lim_{t \to \infty} W(d_0) = \infty$$
+
+   $$
+   \lim_{t \to \infty} W(d_0) = \infty
+   $$
+
 4. Since all competing approaches $d \ne d_0$ receive green phases of bounded maximum duration $T_{\max} \le 25.0\text{ s}$, and their wait timers reset to zero upon receiving green (`wait_accum[d] = 0`), their heuristic scores are bounded from above:
-   $$P(d) \le w_v \cdot C_{\max} + w_w \cdot T_{\max} < \infty$$
+
+   $$
+   P(d) \le w_v \cdot C_{\max} + w_w \cdot T_{\max} < \infty
+   $$
+
 5. Because $P(d_0)$ grows unbounded as time progresses while competing scores remain bounded, there exists a finite time $t' > t_0$ such that:
-   $$P(d_0)(t') > \max_{d \ne d_0} P(d)(t')$$
+
+   $$
+   P(d_0)(t') > \max_{d \ne d_0} P(d)(t')
+   $$
+
 6. By the Greedy Choice Rule, approach $d_0$ is guaranteed selection at the next transition point. $\blacksquare$
 
 ---
@@ -248,9 +283,17 @@ Let:
 1. **Critical Section Definition:** The intersection square $I = [X_{\text{left}}, X_{\text{right}}] \times [Y_{\text{top}}, Y_{\text{bottom}}]$ constitutes a shared resource (critical section).
 2. **Phase Mutual Exclusion:** In both Fixed-Time and Greedy modes, only one approach $d \in \text{DIRECTIONS}$ is assigned `STATE_GREEN` at any instant. All remaining approaches are assigned `STATE_RED`.
 3. **Transition Clearance Invariant:** Between any two green phases for conflicting directions $d_i$ and $d_j$ ($i \ne j$), the controller enforces:
-   $$T_{\text{clearance}} = T_{\text{yellow}} + T_{\text{all-red}} = 3.0\text{ s} + 1.0\text{ s} = 4.0\text{ s}$$
+
+   $$
+   T_{\text{clearance}} = T_{\text{yellow}} + T_{\text{all-red}} = 3.0\text{ s} + 1.0\text{ s} = 4.0\text{ s}
+   $$
+
    Given road width $W_{\text{road}} = 120\text{ px}$ and base vehicle speed $v = 120\text{ px/s}$, the maximum clearance time required is:
-   $$t_{\text{clear}} = \frac{W_{\text{road}} + L_{\text{car}}}{v} = \frac{120 + 30}{120} = 1.25\text{ s} < 4.0\text{ s}$$
+
+   $$
+   t_{\text{clear}} = \frac{W_{\text{road}} + L_{\text{car}}}{v} = \frac{120 + 30}{120} = 1.25\text{ s} < 4.0\text{ s}
+   $$
+
 4. **Active Clearance Priority:** Vehicles that have crossed the stop line (`passed_stop_line = True`) ignore red transitions and retain movement priority until `is_past_intersection() = True`.
 5. **Entry Guard:** Approaching vehicles check `is_intersection_clear()` prior to entry; if a crossing vehicle occupies $I$, approaching vehicles hold behind the stop line.
 6. Since vehicles inside $I$ have zero conflicting obstacles ahead and move monotonically forward ($\Delta x \cdot \text{dx} > 0$ or $\Delta y \cdot \text{dy} > 0$), they must exit in finite time $\le 1.25\text{ s}$, clearing $I$ and releasing waiting vehicles. Hence, circular wait is impossible and the intersection is guaranteed **deadlock-free**. $\blacksquare$
