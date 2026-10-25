@@ -1,270 +1,507 @@
 # Traffic Signal Optimization Simulation
+### A 2D Simulation of Fixed-Time and Greedy Adaptive Traffic Signal Control
 
-A 2D top-down traffic intersection simulation built with **Python 3** and **Pygame-CE**. This project serves as a comprehensive **Design and Analysis of Algorithms (DAA)** college mini-project demonstrating and comparing **Fixed-Time Round-Robin Control** and **Greedy Adaptive Optimization** for four-way traffic flow.
+## 1. Project Overview
 
----
+The **Traffic Signal Optimization Simulation** is a two-dimensional, top-down traffic intersection simulation developed using Python 3 and Pygame-CE. It is designed as a Design and Analysis of Algorithms (DAA) mini-project to demonstrate and compare two traffic signal control strategies: Fixed-Time Round-Robin Scheduling and Greedy Adaptive Optimization.
 
-## 1. Features
+The simulation models a four-way intersection with dynamically generated vehicles, realistic vehicle-following behavior, traffic signal transitions, and a graphical control panel. Users can observe how different signal scheduling strategies affect traffic queues, vehicle waiting times, and traffic flow under varying traffic conditions.
 
-- **Realistic 4-Way Intersection:** Dark asphalt roads, dashed lane dividers, stop lines, sidewalks, and surrounding terrain rendered purely via Pygame drawing primitives (zero external graphical assets).
-- **Smooth Kinematic Car-Following Model:** Continuous delta-time ($\Delta t$) vehicle motion, safe following headways, deceleration to stop lines, and intersection exit clearance without mid-box stalling.
-- **Dynamic Asymmetric Traffic Generation:** Independent Bernoulli arrival distributions per approach with anti-overlap safety checks.
-- **Two Signal-Control Paradigms:**
-  - **Fixed-Time Control:** Deterministic cyclic phase scheduling (Round-Robin).
-  - **Greedy Optimization:** Real-time heuristic priority selection based on queue length and accumulated delay:
-    > **Priority Formula:** `Priority(d) = 1.0 × Queue_Count(d) + 2.0 × Average_Wait_Time(d)`
-- **Integrated Countdown Timers:**
-  - Real-time digital LED timer attached beside each physical traffic signal.
-  - GUI control panel with live decimal countdowns to next phase changes and starvation metrics.
-- **Interactive Control Panel:** Start, Pause/Resume, Reset buttons, Mode selector, Live Sliders (Spawn Rate, Green Duration, Simulation Speed), and queue telemetry.
+The primary objective is to demonstrate how algorithmic decision-making can improve traffic management when vehicle arrivals are uneven across different roads.
 
----
+## 2. Key Features
 
-## 2. Requirements
+### 2.1 Realistic 2D Intersection
 
-- **Python:** 3.9 or later (tested up to Python 3.14)
-- **Library:** `pygame-ce >= 2.5.0` (Community Edition drop-in replacement with multi-platform prebuilt binaries)
+- Four-way intersection with North, South, East, and West approaches.
+- Dark asphalt roads, lane dividers, stop lines, sidewalks, and surrounding terrain.
+- Traffic lights with red, yellow, and green states.
+- Vehicles rendered using Pygame drawing primitives, without external graphical assets.
 
----
+### 2.2 Vehicle Movement and Collision Avoidance
 
-## 3. Installation & Execution (Windows)
+- Smooth vehicle movement using delta-time-based updates.
+- Vehicle-following logic that maintains safe distances between consecutive vehicles.
+- Automatic deceleration and stopping at red signals.
+- Intersection exit detection and clearance handling.
+- Entry checks to prevent conflicting traffic movements from entering an occupied intersection.
 
-Open PowerShell or Command Prompt inside the project directory:
+### 2.3 Dynamic Traffic Generation
+
+- Independent vehicle generation for all four approaches.
+- Adjustable vehicle arrival probability to simulate light and heavy traffic.
+- Asymmetric traffic distributions, allowing one road to receive more traffic than another.
+- Spawn-position clearance checks to prevent vehicles from overlapping when they appear.
+
+### 2.4 Two Traffic Signal Control Algorithms
+
+**Algorithm A: Fixed-Time Round-Robin**
+
+The controller rotates through a predefined sequence:
+
+North → South → East → West → North
+
+Each approach receives a predetermined green duration, followed by yellow and all-red clearance intervals. This method is simple and predictable but does not respond to differences in traffic demand.
+
+**Algorithm B: Greedy Adaptive Optimization**
+
+The controller evaluates the traffic conditions at phase transitions and selects the next approach using a priority score:
+
+Priority(d) = 1.0 × C(d) + 2.0 × W(d)
+
+Where:
+
+- C(d) is the number of vehicles waiting on approach d.
+- W(d) is the average waiting time of the queued vehicles, measured in seconds.
+- 1.0 and 2.0 are configurable weighting factors.
+
+The controller favors approaches with longer queues and greater waiting times. Green duration is adjusted according to queue size, while waiting-time accumulation helps prevent approaches from being repeatedly overlooked.
+
+### 2.5 Interactive Graphical User Interface
+
+The control panel provides:
+
+- Start, Pause/Resume, and Reset controls.
+- Runtime selection between Fixed-Time and Greedy modes.
+- Adjustable vehicle spawn rate.
+- Adjustable baseline green duration.
+- Simulation speed control.
+- Live queue counts for all four approaches.
+- Traffic light countdown timers.
+- Waiting-time and starvation-related telemetry.
+
+## 3. Software and Hardware Requirements
+
+### Software Requirements
+
+| Component | Requirement |
+|---|---|
+| Programming language | Python 3.9 or later |
+| Graphics library | Pygame-CE 2.5.0 or later |
+| Operating system | Windows, Linux, or macOS |
+| Code editor | VS Code, PyCharm, or another Python IDE |
+| Package manager | pip |
+
+### Recommended Hardware
+
+- Dual-core processor or better.
+- At least 4 GB RAM.
+- Standard display capable of rendering a 2D graphical application.
+
+## 4. Installation and Execution
+
+Open PowerShell or Command Prompt in the project directory.
 
 ```powershell
-# 1. Navigate to the project directory
 cd "C:\Users\DELL\OneDrive\Desktop\DAA Project\traffic_signal_simulation"
+```
 
-# 2. (Optional) Create and activate a virtual environment
+Create a virtual environment:
+
+```powershell
 python -m venv venv
+```
+
+Activate it on Windows:
+
+```powershell
 venv\Scripts\activate
+```
 
-# 3. Install dependencies
-pip install -r requirements.txt
+Install the dependencies:
 
-# 4. Launch the simulation
+```powershell
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Run the application:
+
+```powershell
 python main.py
 ```
 
----
+If `pip` is unavailable, repair the Python installation or run:
 
-## 4. GUI Controls & Keybindings
-
-| Control | Type | Description |
-|---|---|---|
-| **Start** | Button | Initializes and launches the simulation clock and vehicle updates. |
-| **Pause / Resume** | Button | Freezes all simulation physics and timers without clearing state. |
-| **Reset** | Button | Clears all vehicles from all approaches and re-initializes signals to North. |
-| **Mode Selector** | Dropdown | Toggles between **Fixed-Time** and **Greedy** optimization on-the-fly. |
-| **Spawn Rate** | Slider | Tunes Bernoulli arrival probability per frame ($p \in [0.005, 0.08]$). |
-| **Green Time** | Slider | Sets baseline green phase duration ($t_g \in [5.0\text{ s}, 30.0\text{ s}]$). |
-| **Sim Speed** | Slider | Adjusts simulation clock multiplier ($1.0\times$ to $3.0\times$). |
-
----
-
-## 5. Project Architecture
-
+```powershell
+python -m ensurepip --upgrade
 ```
+
+The project should start with the graphical intersection and its control panel.
+
+## 5. GUI Controls
+
+| Control | Function |
+|---|---|
+| Start | Starts vehicle movement and the simulation clock. |
+| Pause/Resume | Freezes or resumes vehicle movement, signal timers, and simulation time. |
+| Reset | Clears vehicles and restores the initial signal state. |
+| Mode Selector | Switches between Fixed-Time and Greedy Adaptive control. |
+| Spawn Rate | Controls the probability of vehicle arrivals. |
+| Green Duration | Sets the baseline green duration. |
+| Simulation Speed | Changes the simulation clock multiplier. |
+| Queue Telemetry | Displays the number of waiting vehicles on each approach. |
+| Countdown Timer | Displays the remaining time in the current signal phase. |
+
+## 6. Project Architecture
+
+```text
 traffic_signal_simulation/
 │
-├── main.py              # Application entry point, main loop, GUI panel & rendering
-├── settings.py          # Global constants, coordinates, timings, and color palette
-├── vehicle.py           # Vehicle kinematics, bounding rects, headway & stop-line logic
-├── traffic_light.py     # Signal states, transition rendering & attached digital timers
-├── intersection.py      # Vector drawing of asphalt, lanes, curbs, and stop lines
-├── traffic_generator.py # Stochastic arrival process and spatial clearance validation
-├── signal_controller.py # Fixed-Time Round-Robin and Greedy Optimization engines
-├── requirements.txt     # Python package requirements
-├── Read.txt             # Plaintext version of project analysis
-└── README.md            # Comprehensive project & DAA theoretical analysis documentation
+├── main.py
+│   └── Main loop, GUI, event handling, and rendering
+│
+├── settings.py
+│   └── Constants, dimensions, timings, and colors
+│
+├── vehicle.py
+│   └── Vehicle movement, stopping, and following logic
+│
+├── traffic_light.py
+│   └── Signal states and countdown display
+│
+├── intersection.py
+│   └── Roads, lane markings, sidewalks, and stop lines
+│
+├── traffic_generator.py
+│   └── Random vehicle arrivals and spawn safety checks
+│
+├── signal_controller.py
+│   └── Fixed-Time and Greedy Adaptive algorithms
+│
+├── requirements.txt
+│   └── Python package dependencies
+│
+├── Read.txt
+│   └── Project notes and algorithm analysis
+│
+└── README.md
+    └── Documentation and DAA analysis
 ```
 
----
+## 7. Design and Analysis of Algorithms
 
-## 6. Comprehensive DAA Algorithm Analysis
+### 7.1 Fixed-Time Round-Robin Scheduling
 
-### 6.1 Algorithmic Paradigms Implemented
+The Fixed-Time controller allocates a predetermined green interval to each approach in a cyclic order.
 
-#### Paradigm A: Static Cyclic Permutation (Fixed-Time Round-Robin)
-- **Concept:** Rotates green permission through a fixed, invariant sequence:
-  > `North → South → East → West → North ...`
-- **Transitions:** Each phase allocates a constant duration $T_{\text{green}}$, followed by yellow clearance ($T_{\text{yellow}} = 3.0\text{ s}$) and all-red safety clearance ($T_{\text{all-red}} = 1.0\text{ s}$).
-- **Characteristics:** Predictable, deterministic, zero decision overhead, but suffers from high idle delay under asymmetric traffic distributions.
+For four approaches, the sequence is:
 
-#### Paradigm B: Greedy Heuristic Optimization
-- **Concept:** At every phase expiration, an optimal next phase is selected locally by evaluating a heuristic evaluation function:
-  > **Formula:** `Priority(d) = 1.0 × C(d) + 2.0 × W(d)`
-
-  Where:
-  - `C(d)`: Queue length (number of vehicles waiting behind the stop line on approach $d$).
-  - `W(d)`: Mean delay in seconds experienced by stopped vehicles on approach $d$.
-  - Weights `1.0` and `2.0`: Balancing weights penalizing driver wait time twice as heavily as raw vehicle count.
-- **Tie-Breaking Rule:** Lexicographical order on:  
-  `(Priority Score ↓, Accumulated Inaction Delay ↓, Direction ID ↑)`
-- **Adaptive Green Allocation:** Green duration is dynamically scaled proportional to queue size:
-  - For light queues ($C \le 2$): $T_g = 5.0\text{ s}$
-  - For heavy queues ($C \ge 8$): $T_g = 25.0\text{ s}$
-  - For intermediate queues ($2 < C < 8$): $T_g = 5.0 + \left(\frac{C - 2}{6}\right) \times 20.0\text{ s}$
-- **Starvation Prevention:** A global accumulator `wait_accum[d]` increments every frame approach $d$ is denied green, guaranteeing that as $t \to \infty$, $W(d) \to \infty$, strictly forcing the greedy score to overtake any competing queue.
-
----
-
-### 6.2 Time Complexity Analysis
+North → South → East → West → North
 
 Let:
-- $K$: Number of intersection approaches ($K = 4$ for a 4-way intersection).
-- $N$: Total number of active vehicles currently simulated across all approaches ($N = \sum_{d=1}^K N_d$).
-- $N_d$: Number of vehicles present on road $d$ ($N_d \le N$).
 
-#### 1. Signal Controller Phase Decision (`signal_controller._choose_next_phase`)
-- **Fixed-Time Mode:**
-  - Direct cyclic index advance: `next_idx = (current_idx + 1) % 4`
-  - **Best, Average, Worst Case Time Complexity:** $\mathcal{O}(1)$
-- **Greedy Optimization Mode:**
-  - Evaluates heuristic formula for all $K = 4$ directions: $\mathcal{O}(K)$
-  - Multi-key sorting/selection of $K$ elements: $\mathcal{O}(K \log K)$
-  - Since $K = 4$ is a constant, this computation runs in bounded time $\mathcal{O}(1)$ relative to vehicle count $N$.
-  - **General Form (for $K$ approaches):** $\mathcal{O}(K \log K)$
-  - **Best Case:** $\Omega(K)$ (with linear max-heap selection).
-  - **Worst Case:** $\mathcal{O}(K \log K)$.
-  - **Average Case:** $\Theta(K \log K)$.
+- K be the number of approaches.
+- Tgreen be the configured green duration.
+- Tyellow be the yellow clearance duration.
+- Tall-red be the all-red clearance duration.
 
-#### 2. Signal Countdown Calculation (`signal_controller.get_time_remaining`)
-- Computes modular distance $(d_{\text{target}} - d_{\text{next}}) \bmod K$ and scalar arithmetic.
-- Evaluated for all $K$ signals per frame.
-- **Best, Average, Worst Case:** $\mathcal{O}(1)$ per signal, $\mathcal{O}(K)$ total per frame.
+The duration of a complete four-approach cycle is:
 
-#### 3. Vehicle Sorting per Lane (`main.py: lane.sort`)
-- Vehicles in each approach are sorted along their travel axis so the leader is at index $0$.
-- Uses Python's **Timsort** (adaptive mergesort/insertionsort hybrid).
-- **Best Case:** $\Omega(N_d)$ when the vehicle queue is already in sorted spatial order (common case across consecutive frames).
-- **Worst Case:** $\mathcal{O}(N_d \log N_d)$ if spawning causes random reordering.
-- **Average Case:** $\Theta(N_d \log N_d)$.
-- **Total across all $K$ approaches:**
-  - Best Case: $\Omega(N)$
-  - Worst Case: $\mathcal{O}\left(\sum_{d=1}^K N_d \log N_d\right) \le \mathcal{O}\left(N \log\frac{N}{K}\right)$
+Tcycle = K × (Tgreen + Tyellow + Tall-red)
 
-#### 4. Kinematic Motion & Car-Following Update (`vehicle.update`)
-- Single vehicle headway comparison: $\mathcal{O}(1)$ scalar arithmetic with front car and stop line.
-- Evaluated once per vehicle per frame across $N$ vehicles.
-- **Best, Average, Worst Case:** $\Theta(N)$
+For K = 4, Tyellow = 3 seconds, and Tall-red = 1 second:
 
-#### 5. Cross-Traffic Intersection Clearance Verification (`main.py`)
-- For each direction $d$, queries whether any perpendicular approach vehicle occupies the central junction bounding box $B$:
-  - For North / South traffic: checks vehicles on East and West roads ($N_{\text{perp}} = N_{\text{East}} + N_{\text{West}}$)
-  - For East / West traffic: checks vehicles on North and South roads ($N_{\text{perp}} = N_{\text{North}} + N_{\text{South}}$)
-- Each AABB (Axis-Aligned Bounding Box) intersection test is $\mathcal{O}(1)$.
-- **Best Case:** $\Omega(1)$ (first vehicle tested occupies the box, triggering early exit).
-- **Worst Case:** $\mathcal{O}(N_{\text{perp}})$ (no collision found after testing all perpendicular vehicles).
-- **Average Case:** $\Theta(N_{\text{perp}})$.
+Tcycle = 4 × (Tgreen + 4)
 
-#### 6. Dynamic Traffic Generation (`traffic_generator.try_spawn`)
-- Performs pseudo-random Bernoulli trial per approach: $\mathcal{O}(K)$.
-- Checks safe distance clearance at the road entry against existing vehicles on that road: $\mathcal{O}(N_d)$.
-- **Best Case:** $\Omega(1)$ (probability check fails, no spawn attempted).
-- **Worst Case:** $\mathcal{O}(K \cdot N_d)$ (validates spawn point across all vehicles on the approach).
-- **Average Case:** $\Theta(K)$.
+The controller does not need to inspect queue lengths to choose its next approach. Therefore, its phase-selection time complexity is O(1), and its controller state requires O(1) auxiliary space for a fixed number of approaches.
 
-#### 7. Per-Frame Main Loop Overall Time Complexity
-Combining all operations for one simulation tick ($\Delta t$):
+**Advantages**
 
-```
-T_frame = O(Spawn) + O(Sort) + O(Clearance Check) + O(Vehicle Updates) + O(Signal Logic)
-        = O(N) + O(N log(N/K)) + O(N) + O(N) + O(K log K)
-```
+- Simple to implement and understand.
+- Predictable signal scheduling.
+- Low decision-making overhead.
+- Provides a cyclic opportunity for every approach.
 
-- **Best Case Frame Complexity:** $\Omega(N)$ (queues already sorted, no spawns).
-- **Worst Case Frame Complexity:** $\mathcal{O}(N \log N)$ (dominated by Timsort when $N \gg K$).
-- **Average Case Frame Complexity:** $\Theta\left(N \log\frac{N}{K}\right)$.
+**Limitations**
 
----
+- Allocates green time even when an approach has little or no traffic.
+- Cannot respond directly to traffic imbalance.
+- Can increase average waiting time under highly asymmetric arrivals.
 
-### 6.3 Space Complexity Analysis
+### 7.2 Greedy Adaptive Optimization
+
+The Greedy controller selects the next approach using a local priority calculation at each eligible phase transition.
+
+Priority(d) = αC(d) + βW(d)
+
+Where α = 1 and β = 2 in the default configuration.
+
+The queue length represents immediate demand, while waiting time represents accumulated service delay. The waiting-time weight encourages the controller to serve approaches that have waited longer.
+
+The controller selects the approach with the highest priority score. Ties are resolved deterministically using accumulated waiting time and a fixed direction order.
+
+#### Adaptive Green Duration
+
+The green duration is calculated using the queue length C:
+
+- If C ≤ 2, green duration is 5 seconds.
+- If C ≥ 8, green duration is 25 seconds.
+- If 2 < C < 8, the duration is interpolated between 5 and 25 seconds.
+
+For intermediate queues:
+
+Tgreen = 5 + ((C − 2) / 6) × 20 seconds
+
+This produces a bounded green duration between 5 and 25 seconds.
+
+#### Starvation Prevention
+
+The controller tracks waiting time for approaches that are denied service. This encourages the selection of neglected approaches even when other roads have larger queues.
+
+A starvation metric should measure the elapsed time since an approach last received service, or the waiting time of its oldest queued vehicle. These measurements should be distinguished from the average waiting time used in the priority formula.
+
+**Important:** A waiting-time score alone does not guarantee starvation freedom if queue counts are unbounded or if the controller continually resets waiting-time values before service. A strict guarantee requires explicit assumptions and a scheduling rule that ensures every continuously waiting approach receives service within a finite bound.
+
+### 7.3 Complexity Analysis
 
 Let:
-- $N$: Number of active `Vehicle` instances currently allocated in memory.
-- $K$: Number of approaches ($K = 4$).
 
-#### 1. Primary Data Structures
-- **Vehicle Store (`dict[str, list[Vehicle]]`):**
-  - Stores references to all active cars: $\Theta(N)$ space.
-  - Each `Vehicle` object stores 10 scalar attributes ($x, y, v, \text{id}, \text{direction}, \dots$): $\mathcal{O}(1)$ space per vehicle.
-- **Traffic Light Store (`dict[str, TrafficLight]`):**
-  - $K$ instances containing state, coordinates, and cached timers: $\Theta(K)$ space.
-- **Signal Controller State:**
-  - Delay accumulators `wait_accum` $\in \mathbb{R}^K$: $\Theta(K)$ space.
-  - Constants and phase indices: $\mathcal{O}(1)$ space.
+- K = number of approaches.
+- N = total number of active vehicles.
+- Nd = number of vehicles on approach d.
+- N = Σ Nd across all approaches.
 
-#### 2. Auxiliary (Temporary) Memory
-- **Timsort Auxiliary Memory:** Requires at most $\mathcal{O}(N_d)$ temporary pointer buffer during merge passes. Across all lanes, temporary auxiliary space is bounded by $\mathcal{O}(N)$.
-- **Queue Count & Wait Aggregations:** Temporary comprehension lists for waiting vehicles: $\mathcal{O}(N)$ temporary memory during `_update`.
-- **Cross-traffic Query Buffer:** $\mathcal{O}(1)$ auxiliary space (boolean generator evaluation).
+#### A. Fixed-Time Phase Selection
 
-#### 3. Overall Space Complexity Summary
-- **Total Auxiliary Space:** $\mathcal{O}(N)$
-- **Total Working Space Complexity:** $\Theta(N + K) \equiv \Theta(N)$ (Linear with respect to active traffic density).
+The next phase is obtained through a cyclic index update:
 
----
+```python
+next_idx = (current_idx + 1) % K
+```
 
-## 7. Comparative Algorithm Complexity Matrix
+| Case | Time Complexity |
+|---|---|
+| Best | O(1) |
+| Average | O(1) |
+| Worst | O(1) |
 
-| Metric / Dimension | Fixed-Time Control | Greedy Optimization Control |
+Auxiliary space: O(1).
+
+#### B. Greedy Phase Selection
+
+The controller calculates priority values for K approaches and selects the highest-ranked candidate.
+
+If all approaches are sorted by priority, the complexity is:
+
+| Case | Time Complexity |
+|---|---|
+| Best | O(K) with linear maximum selection |
+| Average | O(K log K) if sorting is used |
+| Worst | O(K log K) if sorting is used |
+
+If K = 4, the selection overhead is effectively constant with respect to the number of vehicles N.
+
+Auxiliary space is O(K) if priority values are stored in a temporary collection.
+
+#### C. Countdown Calculation
+
+Calculating the remaining time for one signal using arithmetic takes O(1). Calculating it for every approach takes O(K).
+
+For four approaches, this is O(1) with respect to N.
+
+#### D. Vehicle Sorting
+
+Vehicles are sorted within each approach so that the leading vehicle can be processed first.
+
+Using Python's Timsort:
+
+- Best case: O(Nd) for an already ordered lane.
+- Average case: typically O(Nd log Nd).
+- Worst case: O(Nd log Nd).
+
+Across all approaches, the upper bound is O(N log N) for K = 4.
+
+More generally, if K is variable and vehicles are distributed evenly, the sorting cost is approximately O(N log(N/K)) across all lanes, excluding the case of empty lanes.
+
+#### E. Vehicle Movement
+
+Each vehicle performs a bounded amount of movement, speed, and headway calculation per frame.
+
+Total time complexity: O(N).
+
+#### F. Intersection Clearance Checks
+
+If a vehicle checks every vehicle on perpendicular approaches to determine whether the intersection is occupied, the worst-case cost can be O(N).
+
+A spatial grid or dedicated intersection-occupancy flag can reduce repeated clearance checks, depending on the implementation.
+
+#### G. Vehicle Generation
+
+Random arrival trials take O(K). If each attempted spawn checks all vehicles on the corresponding approach, clearance validation costs O(Nd) per attempted spawn.
+
+The worst-case cost is O(K + ΣNd) = O(N + K) when each approach has at most one spawn attempt per frame.
+
+#### H. Overall Per-Frame Complexity
+
+Assuming the implementation sorts vehicle lists every frame and uses linear intersection clearance checks:
+
+Tframe = O(N log N + N + K log K)
+
+For a fixed four-way intersection:
+
+**Worst-case time complexity: O(N log N).**
+
+If vehicles are already ordered, the sorting cost may be closer to linear, giving O(N) per frame under the stated assumptions.
+
+These bounds describe computational work per frame, not the number of frames required to clear traffic.
+
+### 7.4 Space Complexity
+
+The primary data structures include vehicle objects, lane lists, traffic-light objects, and controller state.
+
+| Structure | Space Complexity |
+|---|---|
+| Vehicle storage | O(N) |
+| Vehicle attributes | O(1) per vehicle |
+| Traffic lights | O(K) |
+| Waiting-time accumulators | O(K) |
+| Temporary sorting storage | O(N) upper bound |
+| Queue aggregation | O(N) if temporary lists are created |
+
+Overall working space is:
+
+S(N, K) = O(N + K)
+
+For a fixed four-way intersection, this simplifies to **O(N)**.
+
+## 8. Safety Properties and Algorithmic Invariants
+
+### 8.1 Signal Exclusivity
+
+At most one conflicting approach should be permitted to enter the intersection at any given time.
+
+The controller must enforce the following transition sequence:
+
+1. Terminate the current green phase.
+2. Display yellow for the configured clearance interval.
+3. Set all approaches to red during the all-red interval.
+4. Activate the next green phase only after the clearance conditions are satisfied.
+
+The all-red interval must be long enough for vehicles already inside the intersection to clear safely. A fixed interval alone is not a universal safety guarantee; the actual required time depends on vehicle speed, vehicle length, intersection geometry, and turning paths.
+
+### 8.2 Intersection Clearance
+
+Vehicles that have entered the intersection should be allowed to finish their movement safely, even if their approach subsequently changes from green to yellow or red.
+
+Vehicles waiting at the stop line must not enter while a conflicting vehicle occupies the intersection.
+
+For a simplified straight-through vehicle model, a lower-bound clearance estimate is:
+
+Tclear ≥ (Wroad + Lcar) / v
+
+Where Wroad is the intersection traversal distance, Lcar is vehicle length, and v is the vehicle's traversal speed.
+
+For example, with Wroad = 120 pixels, Lcar = 30 pixels, and v = 120 pixels/second:
+
+Tclear ≥ (120 + 30) / 120 = 1.25 seconds
+
+This estimate applies only to the stated geometry and constant-speed assumptions. Turning movements, acceleration, and additional clearance margins may require more time.
+
+### 8.3 Deadlock Prevention
+
+To prevent vehicles from remaining permanently blocked inside the intersection:
+
+- Vehicles must not enter when their exit path is blocked.
+- Vehicles already inside must retain movement priority.
+- The controller must avoid granting conflicting movements simultaneously.
+- Entry checks must not prevent an already-entered vehicle from completing its movement.
+
+Under these assumptions, a vehicle with an unobstructed exit path and positive forward speed can leave the intersection in finite time.
+
+This is a conditional safety argument, not a universal proof of deadlock freedom for every possible traffic configuration.
+
+### 8.4 Starvation-Freedom Considerations
+
+Fixed-Time Round-Robin provides a bounded opportunity for every approach, provided that phase transitions continue and each phase has a finite duration.
+
+The Greedy controller uses queue length and waiting time to prioritize demand. However, a strict starvation-freedom theorem requires a bounded scheduling policy or an explicit aging rule with suitable bounds on competing demand.
+
+A robust implementation can impose a maximum waiting-time threshold: if an approach exceeds the threshold, it must be selected at the next eligible transition, subject to safe clearance.
+
+This guarantees a bounded opportunity for service when the controller continues operating and the clearance protocol terminates.
+
+## 9. Performance Comparison
+
+| Metric | Fixed-Time Round-Robin | Greedy Adaptive |
 |---|---|---|
-| **Algorithmic Category** | Static Cyclic Permutation | Dynamic Heuristic Greedy Search |
-| **Phase Selection Time Complexity (Best Case)** | $\Omega(1)$ | $\Omega(K)$ |
-| **Phase Selection Time Complexity (Worst Case)** | $\mathcal{O}(1)$ | $\mathcal{O}(K \log K)$ |
-| **Phase Selection Time Complexity (Average Case)** | $\Theta(1)$ | $\Theta(K \log K)$ |
-| **Decision Frequency** | At transition boundaries ($T_{\text{fixed}}$) | At transition boundaries ($T_{\text{adaptive}}$) |
-| **State Space Complexity** | $\mathcal{O}(1)$ | $\mathcal{O}(K)$ |
-| **Adaptability to Traffic Asymmetry** | Poor (Zero responsiveness to empty lanes) | High (Allocates time dynamically based on load) |
-| **Starvation Prevention Mechanism** | Inherent via cyclic round-robin guarantee | Enforced via cumulative delay weight ($2 \times W$) |
-| **Queue Dissipation Efficiency** | $\mathcal{O}(1)$ static throughput | Adaptive throughput up to $T_{\max} / T_{\min} = 5\times$ |
-| **Average Vehicle Waiting Time** | High under burst/skewed arrivals | Low (Minimizes cumulative intersection delay) |
+| Scheduling strategy | Cyclic | Priority-based |
+| Phase selection | O(1) | O(K) with linear maximum selection |
+| Queue awareness | No | Yes |
+| Adaptive green duration | No | Yes |
+| Predictability | High | Depends on traffic demand |
+| Response to asymmetric traffic | Limited | Better suited to uneven queues |
+| Starvation handling | Cyclic service opportunity | Requires a validated aging or maximum-wait rule |
+| Controller state | O(1) | O(K) |
+| Vehicle simulation cost | Shared by both modes | Shared by both modes |
 
----
+The Greedy approach is expected to perform better when traffic demand is uneven, but this is a hypothesis to be evaluated experimentally rather than a guaranteed outcome for every traffic pattern.
 
-## 8. Theoretical Proofs & Invariants
+## 10. Experimental Evaluation
 
-### 8.1 Starvation-Freedom Theorem (Greedy Controller)
+To compare both algorithms fairly, run each mode with the same simulation duration, initial conditions, and traffic arrival settings.
 
-> **Theorem:** Under the Greedy Heuristic score `Priority(d) = 1.0 × C(d) + 2.0 × W(d)`, no approach $d$ with waiting vehicles can be starved of a green signal indefinitely.
+Record the following metrics:
 
-**Proof Sketch:**
-1. Suppose approach $d_0$ has at least one vehicle waiting ($C(d_0) \ge 1$) at time $t_0$.
-2. For every elapsed second where approach $d_0$ is denied a green phase, the controller updates:  
-   `wait_accum[d_0] = wait_accum[d_0] + Δt`
-3. Therefore, average wait time $W(d_0)$ is a strictly monotonically increasing function of time:  
-   $W(d_0) \to \infty$ as $t \to \infty$.
-4. Since all competing approaches $d \ne d_0$ receive green phases of bounded maximum duration $T_{\max} \le 25.0\text{ s}$, and their wait timers reset to zero upon receiving green (`wait_accum[d] = 0`), their heuristic scores are bounded from above:  
-   $P(d) \le (1.0 \times C_{\max}) + (2.0 \times 25.0) < \infty$.
-5. Because $P(d_0)$ grows unbounded as time progresses while competing scores remain bounded, there exists a finite time $t' > t_0$ such that:  
-   $P(d_0)(t') > P(d)(t')$ for all competing approaches $d \ne d_0$.
-6. By the Greedy Choice Rule, approach $d_0$ is guaranteed selection at the next transition point. $\blacksquare$
+1. Average vehicle waiting time.
+2. Maximum waiting time.
+3. Average and maximum queue length per approach.
+4. Total vehicles that successfully exit the intersection.
+5. Throughput, measured as vehicles exiting per unit of simulation time.
+6. Number of vehicles still waiting at the end of the run.
+7. Maximum time an approach remains without service.
 
----
+Perform experiments under at least three traffic conditions:
 
-### 8.2 Deadlock-Freedom & Mutual Exclusion Theorem
+- Uniform traffic: similar arrival rates on all approaches.
+- Asymmetric traffic: one approach receives significantly more vehicles.
+- Burst traffic: one or more approaches experience temporary arrival spikes.
 
-> **Theorem:** Vehicles never deadlock inside the intersection, and conflicting traffic movements never enter the intersection simultaneously.
+Use multiple runs with different random seeds where possible. Report averages and variability instead of drawing conclusions from a single simulation run.
 
-**Proof Sketch:**
-1. **Critical Section Definition:** The intersection square $I = [X_{\text{left}}, X_{\text{right}}] \times [Y_{\text{top}}, Y_{\text{bottom}}]$ constitutes a shared resource (critical section).
-2. **Phase Mutual Exclusion:** In both Fixed-Time and Greedy modes, only one approach $d \in \text{DIRECTIONS}$ is assigned `STATE_GREEN` at any instant. All remaining approaches are assigned `STATE_RED`.
-3. **Transition Clearance Invariant:** Between any two green phases for conflicting directions $d_i$ and $d_j$ ($i \ne j$), the controller enforces:  
-   $T_{\text{clearance}} = T_{\text{yellow}} + T_{\text{all-red}} = 3.0\text{ s} + 1.0\text{ s} = 4.0\text{ s}$  
-   Given road width $W_{\text{road}} = 120\text{ px}$ and base vehicle speed $v = 120\text{ px/s}$, the maximum clearance time required is:  
-   $t_{\text{clear}} = \frac{W_{\text{road}} + L_{\text{car}}}{v} = \frac{120 + 30}{120} = 1.25\text{ s} < 4.0\text{ s}$
-4. **Active Clearance Priority:** Vehicles that have crossed the stop line (`passed_stop_line = True`) ignore red transitions and retain movement priority until `is_past_intersection() = True`.
-5. **Entry Guard:** Approaching vehicles check `is_intersection_clear()` prior to entry; if a crossing vehicle occupies $I$, approaching vehicles hold behind the stop line.
-6. Since vehicles inside $I$ have zero conflicting obstacles ahead and move monotonically forward ($\Delta x \cdot \text{dx} > 0$ or $\Delta y \cdot \text{dy} > 0$), they must exit in finite time $\le 1.25\text{ s}$, clearing $I$ and releasing waiting vehicles. Hence, circular wait is impossible and the intersection is guaranteed **deadlock-free**. $\blacksquare$
+## 11. Limitations and Future Enhancements
 
----
+### Current Scope
 
-## 9. Academic Project Metadata
+- Simplified four-way intersection geometry.
+- Straight-through vehicle movements unless turning logic is implemented.
+- Stochastic traffic arrivals.
+- Heuristic-based adaptive signal control.
+- Simulated rather than real-world traffic conditions.
 
-- **Course:** Design and Analysis of Algorithms (DAA)
-- **Project Domain:** Traffic Flow Modeling, Simulation, Heuristic Optimization & Scheduling
-- **Programming Language:** Python 3 (Object-Oriented, modular architecture)
-- **Visualization:** Pygame-CE (Canvas rasterization without pre-rendered assets)
-- **Authors:** College DAA Mini-Project Team
-- **License:** Educational & Academic Open Source
+### Future Enhancements
+
+- Support for left and right turns.
+- Emergency vehicle priority.
+- Pedestrian crossing signals.
+- More advanced scheduling algorithms, such as Max-Pressure control.
+- CSV export of performance metrics.
+- Side-by-side experimental comparison of both controllers.
+- Improved collision detection and lane-change behavior.
+- Adaptive control calibrated against measured traffic data.
+
+## 12. Academic Project Metadata
+
+**Project Title:** Traffic Signal Optimization Simulation
+
+**Course:** Design and Analysis of Algorithms (DAA)
+
+**Project Domain:** Traffic Flow Simulation, Scheduling, Greedy Algorithms, and Algorithm Analysis
+
+**Programming Language:** Python 3
+
+**Graphics Framework:** Pygame-CE
+
+**Architecture:** Modular, object-oriented design
+
+**Project Type:** College Mini-Project
+
+**License:** Educational and Academic Use
+
+## Conclusion
+
+The Traffic Signal Optimization Simulation demonstrates how different scheduling strategies influence traffic movement at a four-way intersection. Fixed-Time Round-Robin provides a simple and predictable scheduling baseline, while Greedy Adaptive Optimization uses queue length and waiting time to respond to changing traffic demand.
+
+By comparing these approaches under controlled traffic conditions, the project illustrates algorithm selection, complexity analysis, simulation design, and the importance of evaluating practical performance alongside theoretical efficiency.
+
+The project also highlights an important engineering principle: a traffic controller must balance efficiency, fairness, and safety. Adaptive scheduling is useful only when its decisions are evaluated alongside starvation prevention, intersection clearance, and vehicle movement constraints.
