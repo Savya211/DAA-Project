@@ -264,5 +264,3 @@ Let:
 - **Visualization:** Pygame-CE (Canvas rasterization without pre-rendered assets)
 - **Authors:** College DAA Mini-Project Team
 - **License:** Educational & Academic Open Source
-#   D A A - P r o j e c t  
- 
